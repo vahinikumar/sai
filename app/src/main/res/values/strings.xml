@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">One Button WhatsApp Call</string>
+    <string name="call_me">CALL ME ON WHATSAPP</string>
+    <string name="accessibility_description">Automatically starts a WhatsApp voice call after WhatsApp opens.</string>
+</resources>

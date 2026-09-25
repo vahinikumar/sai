@@ -1,50 +1,33 @@
 package com.example.onebuttonwhatsapp;
 
 import android.accessibilityservice.AccessibilityService;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-
-import java.util.Locale;
+import android.widget.Toast;
 
 public class WhatsAppCallAccessibilityService extends AccessibilityService {
 
     private final Handler handler = new Handler();
-    private boolean callClicked = false;
-    private int attempts = 0;
+    private boolean checking = false;
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
 
-        if (event == null) {
+        if (event == null || event.getPackageName() == null) {
             return;
         }
 
-        CharSequence packageName = event.getPackageName();
-
-        if (packageName == null ||
-                !packageName.toString().equals("com.whatsapp")) {
+        if (!event.getPackageName().toString().equals("com.whatsapp")) {
             return;
         }
 
-        if (callClicked) {
+        if (checking) {
             return;
         }
 
-        // Try several times because WhatsApp may load the screen slowly.
-        attempts = 0;
-        handler.removeCallbacksAndMessages(null);
-
-        tryClick();
-    }
-
-    private void tryClick() {
-
-        if (callClicked || attempts >= 8) {
-            return;
-        }
-
-        attempts++;
+        checking = true;
 
         handler.postDelayed(() -> {
 
@@ -52,78 +35,77 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
                     getRootInActiveWindow();
 
             if (root != null) {
-
-                if (findCallButton(root)) {
-                    callClicked = true;
-                    return;
-                }
+                findButtons(root);
             }
 
-            // Try again
-            tryClick();
+            checking = false;
 
-        }, 500);
+        }, 1500);
     }
 
-    private boolean findCallButton(AccessibilityNodeInfo root) {
-
-        // First try text/content descriptions.
-        String[] labels = {
-                "voice call",
-                "audio call",
-                "voice",
-                "call",
-                "phone",
-                "make a call",
-                "start a call"
-        };
-
-        for (String label : labels) {
-
-            if (clickByText(root, label)) {
-                return true;
-            }
-        }
-
-        // Then search for WhatsApp button nodes.
-        return clickButtonNode(root);
-    }
-
-    private boolean clickByText(
-            AccessibilityNodeInfo node,
-            String wanted) {
+    private void findButtons(AccessibilityNodeInfo node) {
 
         if (node == null) {
-            return false;
+            return;
         }
 
-        CharSequence text = node.getText();
-        CharSequence description =
-                node.getContentDescription();
+        String className = "";
+        String text = "";
+        String description = "";
+        String viewId = "";
 
-        if (contains(text, wanted) ||
-                contains(description, wanted)) {
+        if (node.getClassName() != null) {
+            className = node.getClassName().toString();
+        }
 
-            if (node.isClickable()) {
+        if (node.getText() != null) {
+            text = node.getText().toString();
+        }
 
-                if (node.performAction(
-                        AccessibilityNodeInfo.ACTION_CLICK)) {
+        if (node.getContentDescription() != null) {
+            description =
+                    node.getContentDescription().toString();
+        }
 
-                    return true;
-                }
-            }
+        if (node.getViewIdResourceName() != null) {
+            viewId =
+                    node.getViewIdResourceName();
+        }
 
-            AccessibilityNodeInfo parent =
-                    node.getParent();
+        if (node.isClickable() ||
+                className.contains("Button")) {
 
-            if (parent != null &&
-                    parent.isClickable()) {
+            Rect bounds = new Rect();
+            node.getBoundsInScreen(bounds);
 
-                if (parent.performAction(
-                        AccessibilityNodeInfo.ACTION_CLICK)) {
+            String info =
+                    "CLASS: " + className +
+                    "\nTEXT: " + text +
+                    "\nDESC: " + description +
+                    "\nID: " + viewId +
+                    "\nBOUNDS: " + bounds;
 
-                    return true;
-                }
+            android.util.Log.d(
+                    "WHATSAPP_BUTTON",
+                    info
+            );
+
+            // Show possible call-related buttons
+            String all = (
+                    text + " " +
+                    description + " " +
+                    viewId
+            ).toLowerCase();
+
+            if (all.contains("call") ||
+                    all.contains("phone") ||
+                    all.contains("voice")) {
+
+                Toast.makeText(
+                        this,
+                        "CALL BUTTON FOUND:\n" + info,
+                        Toast.LENGTH_LONG
+                ).show();
             }
         }
 
@@ -135,131 +117,18 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
                     node.getChild(i);
 
             if (child != null) {
-
-                if (clickByText(child, wanted)) {
-                    child.recycle();
-                    return true;
-                }
-
+                findButtons(child);
                 child.recycle();
             }
         }
-
-        return false;
-    }
-
-    private boolean clickButtonNode(
-            AccessibilityNodeInfo node) {
-
-        if (node == null) {
-            return false;
-        }
-
-        String className =
-                node.getClassName() == null
-                        ? ""
-                        : node.getClassName().toString();
-
-        String viewId =
-                node.getViewIdResourceName() == null
-                        ? ""
-                        : node.getViewIdResourceName();
-
-        String description =
-                node.getContentDescription() == null
-                        ? ""
-                        : node.getContentDescription()
-                                .toString()
-                                .toLowerCase(Locale.ROOT);
-
-        /*
-         * WhatsApp normally uses ImageButton/Button
-         * for the call icon.
-         *
-         * We only click a button when its information
-         * looks related to calling.
-         */
-        boolean isButton =
-                className.contains("Button");
-
-        boolean looksLikeCall =
-                description.contains("call") ||
-                description.contains("phone") ||
-                description.contains("voice") ||
-                viewId.toLowerCase(Locale.ROOT)
-                        .contains("call");
-
-        if (isButton && looksLikeCall) {
-
-            if (node.isClickable()) {
-
-                if (node.performAction(
-                        AccessibilityNodeInfo.ACTION_CLICK)) {
-
-                    return true;
-                }
-            }
-
-            AccessibilityNodeInfo parent =
-                    node.getParent();
-
-            if (parent != null &&
-                    parent.isClickable()) {
-
-                if (parent.performAction(
-                        AccessibilityNodeInfo.ACTION_CLICK)) {
-
-                    return true;
-                }
-            }
-        }
-
-        for (int i = 0;
-             i < node.getChildCount();
-             i++) {
-
-            AccessibilityNodeInfo child =
-                    node.getChild(i);
-
-            if (child != null) {
-
-                if (clickButtonNode(child)) {
-                    child.recycle();
-                    return true;
-                }
-
-                child.recycle();
-            }
-        }
-
-        return false;
-    }
-
-    private boolean contains(
-            CharSequence value,
-            String wanted) {
-
-        if (value == null) {
-            return false;
-        }
-
-        return value.toString()
-                .toLowerCase(Locale.ROOT)
-                .contains(
-                        wanted.toLowerCase(Locale.ROOT));
     }
 
     @Override
     public void onInterrupt() {
-        // Nothing to do
     }
 
     @Override
     protected void onServiceConnected() {
-
         super.onServiceConnected();
-
-        callClicked = false;
-        attempts = 0;
     }
 }

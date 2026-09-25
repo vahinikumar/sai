@@ -6,11 +6,11 @@
     </queries>
 
     <application
-    android:allowBackup="false"
-    android:label="@string/app_name"
-    android:icon="@drawable/grandma_call"
-    android:theme="@style/Theme.OneButtonWhatsApp"
-    android:supportsRtl="true">
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:icon="@drawable/grandma_call"
+        android:theme="@style/Theme.OneButtonWhatsApp"
+        android:supportsRtl="true">
 
         <activity
             android:name=".MainActivity"
@@ -28,10 +28,23 @@
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
+
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+        <receiver
+            android:name=".GrandmaWidget"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/grandma_widget_info" />
+        </receiver>
 
     </application>
 </manifest>

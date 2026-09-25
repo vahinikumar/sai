@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.example.onebuttonwhatsapp'
+    namespace 'com.example.onebuttonwhatsapp.direct'
     compileSdk 35
 
     defaultConfig {

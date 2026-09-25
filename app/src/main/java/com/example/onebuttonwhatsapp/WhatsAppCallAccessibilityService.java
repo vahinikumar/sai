@@ -5,9 +5,6 @@ import android.os.Handler;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
-import java.io.FileOutputStream;
-import java.nio.charset.StandardCharsets;
-
 public class WhatsAppCallAccessibilityService extends AccessibilityService {
 
     private final Handler handler = new Handler();
@@ -37,13 +34,22 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
 
             if (root != null) {
 
-                StringBuilder result = new StringBuilder();
+                StringBuilder result =
+                        new StringBuilder();
 
-                result.append("WHATSAPP BUTTON INFORMATION\n\n");
+                result.append(
+                        "WHATSAPP BUTTON INFORMATION\n\n");
 
                 collectNodes(root, result);
 
-                saveToFile(result.toString());
+                getSharedPreferences(
+                        "diagnostic",
+                        MODE_PRIVATE)
+                        .edit()
+                        .putString(
+                                "buttons",
+                                result.toString())
+                        .apply();
             }
 
             checking = false;
@@ -65,16 +71,19 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
         String viewId = "";
 
         if (node.getClassName() != null) {
-            className = node.getClassName().toString();
+            className =
+                    node.getClassName().toString();
         }
 
         if (node.getText() != null) {
-            text = node.getText().toString();
+            text =
+                    node.getText().toString();
         }
 
         if (node.getContentDescription() != null) {
             description =
-                    node.getContentDescription().toString();
+                    node.getContentDescription()
+                            .toString();
         }
 
         if (node.getViewIdResourceName() != null) {
@@ -115,26 +124,6 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
                 collectNodes(child, result);
                 child.recycle();
             }
-        }
-    }
-
-    private void saveToFile(String data) {
-
-        try {
-
-            FileOutputStream fos =
-                    openFileOutput(
-                            "whatsapp_buttons.txt",
-                            MODE_PRIVATE);
-
-            fos.write(
-                    data.getBytes(
-                            StandardCharsets.UTF_8));
-
-            fos.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

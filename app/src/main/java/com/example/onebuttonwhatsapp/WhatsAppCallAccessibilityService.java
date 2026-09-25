@@ -1,11 +1,12 @@
 package com.example.onebuttonwhatsapp;
 
 import android.accessibilityservice.AccessibilityService;
-import android.graphics.Rect;
 import android.os.Handler;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-import android.widget.Toast;
+
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class WhatsAppCallAccessibilityService extends AccessibilityService {
 
@@ -35,7 +36,14 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
                     getRootInActiveWindow();
 
             if (root != null) {
-                findButtons(root);
+
+                StringBuilder result = new StringBuilder();
+
+                result.append("WHATSAPP BUTTON INFORMATION\n\n");
+
+                collectNodes(root, result);
+
+                saveToFile(result.toString());
             }
 
             checking = false;
@@ -43,7 +51,9 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
         }, 1500);
     }
 
-    private void findButtons(AccessibilityNodeInfo node) {
+    private void collectNodes(
+            AccessibilityNodeInfo node,
+            StringBuilder result) {
 
         if (node == null) {
             return;
@@ -75,38 +85,23 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
         if (node.isClickable() ||
                 className.contains("Button")) {
 
-            Rect bounds = new Rect();
-            node.getBoundsInScreen(bounds);
+            result.append("CLASS: ")
+                    .append(className)
+                    .append("\n");
 
-            String info =
-                    "CLASS: " + className +
-                    "\nTEXT: " + text +
-                    "\nDESC: " + description +
-                    "\nID: " + viewId +
-                    "\nBOUNDS: " + bounds;
+            result.append("TEXT: ")
+                    .append(text)
+                    .append("\n");
 
-            android.util.Log.d(
-                    "WHATSAPP_BUTTON",
-                    info
-            );
+            result.append("DESCRIPTION: ")
+                    .append(description)
+                    .append("\n");
 
-            // Show possible call-related buttons
-            String all = (
-                    text + " " +
-                    description + " " +
-                    viewId
-            ).toLowerCase();
+            result.append("VIEW ID: ")
+                    .append(viewId)
+                    .append("\n");
 
-            if (all.contains("call") ||
-                    all.contains("phone") ||
-                    all.contains("voice")) {
-
-                Toast.makeText(
-                        this,
-                        "CALL BUTTON FOUND:\n" + info,
-                        Toast.LENGTH_LONG
-                ).show();
-            }
+            result.append("--------------------\n");
         }
 
         for (int i = 0;
@@ -117,9 +112,29 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
                     node.getChild(i);
 
             if (child != null) {
-                findButtons(child);
+                collectNodes(child, result);
                 child.recycle();
             }
+        }
+    }
+
+    private void saveToFile(String data) {
+
+        try {
+
+            FileOutputStream fos =
+                    openFileOutput(
+                            "whatsapp_buttons.txt",
+                            MODE_PRIVATE);
+
+            fos.write(
+                    data.getBytes(
+                            StandardCharsets.UTF_8));
+
+            fos.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

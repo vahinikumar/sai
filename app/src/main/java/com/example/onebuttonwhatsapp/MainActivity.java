@@ -1,6 +1,7 @@
 package com.example.onebuttonwhatsapp;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -20,20 +21,20 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER);
-        root.setPadding(25, 25, 25, 25);
+        root.setPadding(15, 15, 15, 15);
 
         Button callButton = new Button(this);
-        callButton.setText("📞  CALL ME\n       ON WHATSAPP");
-        callButton.setTextSize(30);
+
+        callButton.setBackgroundResource(R.drawable.grandma_call);
+
+        callButton.setText("");
         callButton.setGravity(Gravity.CENTER);
-        callButton.setAllCaps(false);
+        callButton.setPadding(0, 0, 0, 0);
 
         LinearLayout.LayoutParams buttonParams =
                 new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
-                        500);
-
-        buttonParams.setMargins(10, 10, 10, 10);
+                        LinearLayout.LayoutParams.MATCH_PARENT);
 
         root.addView(callButton, buttonParams);
 

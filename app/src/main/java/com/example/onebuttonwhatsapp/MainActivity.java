@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String WHATSAPP_NUMBER = "91";
+    private static final String WHATSAPP_NUMBER = "917993365553";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

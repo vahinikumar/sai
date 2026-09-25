@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
                 .apply();
 
         Uri uri = Uri.parse(
-                "https://wa.me/" + WHATSAPP_NUMBER);
+                "whatsapp://send?phone=" + WHATSAPP_NUMBER);
 
         Intent intent = new Intent(
                 Intent.ACTION_VIEW,

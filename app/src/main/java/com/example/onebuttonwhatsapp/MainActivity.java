@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String WHATSAPP_NUMBER = "91XXXXXXXXXX";
+    private static final String WHATSAPP_NUMBER = "917993365553";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -1,46 +1,22 @@
 package com.example.onebuttonwhatsapp;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.widget.Button;
-import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String WHATSAPP_NUMBER = "917993365553";
+    private static final String WHATSAPP_NUMBER = "91";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER);
-        root.setPadding(15, 15, 15, 15);
+        startWhatsAppCall();
 
-        Button callButton = new Button(this);
-
-        callButton.setBackgroundResource(R.drawable.grandma_call);
-
-        callButton.setText("");
-        callButton.setGravity(Gravity.CENTER);
-        callButton.setPadding(0, 0, 0, 0);
-
-        LinearLayout.LayoutParams buttonParams =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.MATCH_PARENT);
-
-        root.addView(callButton, buttonParams);
-
-        callButton.setOnClickListener(v -> startWhatsAppCall());
-
-        setContentView(root);
+        finish();
     }
 
     private void startWhatsAppCall() {

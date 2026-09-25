@@ -1,4 +1,4 @@
-package com.example.onebuttonwhatsapp;
+package com.example.onebuttonwhatsapp.direct;
 
 import android.accessibilityservice.AccessibilityService;
 import android.os.Handler;

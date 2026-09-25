@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             startActivity(intent);
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

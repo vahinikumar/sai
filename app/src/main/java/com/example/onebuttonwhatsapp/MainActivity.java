@@ -3,6 +3,7 @@ package com.example.onebuttonwhatsapp;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -14,9 +15,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        startWhatsAppCall();
+        Toast.makeText(
+                this,
+                "APP STARTED",
+                Toast.LENGTH_LONG
+        ).show();
 
-        finish();
+        startWhatsAppCall();
     }
 
     private void startWhatsAppCall() {
@@ -37,8 +42,14 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             startActivity(intent);
+
         } catch (Exception e) {
-            e.printStackTrace();
+
+            Toast.makeText(
+                    this,
+                    "WHATSAPP OPEN FAILED",
+                    Toast.LENGTH_LONG
+            ).show();
         }
     }
 }

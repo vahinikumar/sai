@@ -6,13 +6,12 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String WHATSAPP_NUMBER = "91";
+    private static final String WHATSAPP_NUMBER = "917993365553";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,13 +21,6 @@ public class MainActivity extends AppCompatActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER);
         root.setPadding(25, 25, 25, 25);
-
-        TextView title = new TextView(this);
-        title.setText("📞\nCALL GRANDMA");
-        title.setTextSize(32);
-        title.setGravity(Gravity.CENTER);
-
-        root.addView(title);
 
         Button callButton = new Button(this);
         callButton.setText("📞  CALL ME\n       ON WHATSAPP");
@@ -41,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         500);
 
-        buttonParams.setMargins(10, 50, 10, 10);
+        buttonParams.setMargins(10, 10, 10, 10);
 
         root.addView(callButton, buttonParams);
 
@@ -52,7 +44,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void startWhatsAppCall() {
 
-        // Tell the Accessibility Service that WE requested the call.
         getSharedPreferences("call_control", MODE_PRIVATE)
                 .edit()
                 .putBoolean("call_requested", true)

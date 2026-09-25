@@ -6,10 +6,11 @@
     </queries>
 
     <application
-        android:allowBackup="false"
-        android:label="@string/app_name"
-        android:theme="@style/Theme.OneButtonWhatsApp"
-        android:supportsRtl="true">
+    android:allowBackup="false"
+    android:label="@string/app_name"
+    android:icon="@drawable/grandma_call"
+    android:theme="@style/Theme.OneButtonWhatsApp"
+    android:supportsRtl="true">
 
         <activity
             android:name=".MainActivity"

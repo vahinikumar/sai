@@ -13,11 +13,16 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
 
-        if (event == null || event.getPackageName() == null) {
+        if (event == null) {
             return;
         }
 
-        if (!event.getPackageName().toString().equals("com.whatsapp")) {
+        CharSequence packageName =
+                event.getPackageName();
+
+        // Only work when WhatsApp is active.
+        if (packageName == null ||
+                !packageName.toString().equals("com.whatsapp")) {
             return;
         }
 
@@ -27,6 +32,7 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
 
         checking = true;
 
+        // Give WhatsApp a short time to finish loading.
         handler.postDelayed(() -> {
 
             AccessibilityNodeInfo root =
@@ -40,7 +46,7 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
                 result.append(
                         "WHATSAPP BUTTON INFORMATION\n\n");
 
-                collectNodes(root, result);
+                collectWhatsAppNodes(root, result);
 
                 getSharedPreferences(
                         "diagnostic",
@@ -54,10 +60,10 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
 
             checking = false;
 
-        }, 1500);
+        }, 800);
     }
 
-    private void collectNodes(
+    private void collectWhatsAppNodes(
             AccessibilityNodeInfo node,
             StringBuilder result) {
 
@@ -91,6 +97,7 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
                     node.getViewIdResourceName();
         }
 
+        // Record clickable elements and buttons.
         if (node.isClickable() ||
                 className.contains("Button")) {
 
@@ -121,7 +128,11 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
                     node.getChild(i);
 
             if (child != null) {
-                collectNodes(child, result);
+
+                collectWhatsAppNodes(
+                        child,
+                        result);
+
                 child.recycle();
             }
         }
@@ -133,6 +144,9 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
 
     @Override
     protected void onServiceConnected() {
+
         super.onServiceConnected();
+
+        checking = false;
     }
 }

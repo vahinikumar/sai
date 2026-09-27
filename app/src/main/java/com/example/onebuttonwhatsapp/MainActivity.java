@@ -1,44 +1,176 @@
 package com.example.onebuttonwhatsapp.direct;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
+import android.accessibilityservice.AccessibilityService;
+import android.os.Handler;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 
-import androidx.appcompat.app.AppCompatActivity;
+public class WhatsAppCallAccessibilityService extends AccessibilityService {
 
-public class MainActivity extends AppCompatActivity {
+    private final Handler handler = new Handler();
 
-    private static final String WHATSAPP_NUMBER = "917993365553";
+    private boolean searching = false;
+    private boolean callClicked = false;
+    private int attempts = 0;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onAccessibilityEvent(AccessibilityEvent event) {
 
-        startWhatsAppCall();
+        if (event == null) return;
 
-        finish();
+        CharSequence packageName = event.getPackageName();
+
+        if (packageName == null) return;
+
+        if (!packageName.toString().equals("com.whatsapp")) return;
+
+        boolean callRequested =
+                getSharedPreferences(
+                        "call_control",
+                        MODE_PRIVATE)
+                        .getBoolean(
+                                "call_requested",
+                                false);
+
+        if (!callRequested) return;
+
+        if (searching || callClicked) return;
+
+        searching = true;
+        attempts = 0;
+
+        findVoiceCallButton();
     }
 
-    private void startWhatsAppCall() {
+    private void findVoiceCallButton() {
 
-        getSharedPreferences("call_control", MODE_PRIVATE)
-                .edit()
-                .putBoolean("call_requested", true)
-                .apply();
+        if (callClicked || attempts >= 10) {
 
-        Uri uri = Uri.parse(
-                "whatsapp://send?phone=" + WHATSAPP_NUMBER);
+            searching = false;
 
-        Intent intent = new Intent(
-                Intent.ACTION_VIEW,
-                uri);
+            getSharedPreferences(
+                    "call_control",
+                    MODE_PRIVATE)
+                    .edit()
+                    .putBoolean(
+                            "call_requested",
+                            false)
+                    .apply();
 
-        intent.setPackage("com.whatsapp");
-
-        try {
-            startActivity(intent);
-        } catch (Exception e) {
-            e.printStackTrace();
+            return;
         }
+
+        attempts++;
+
+        handler.postDelayed(() -> {
+
+            AccessibilityNodeInfo root =
+                    getRootInActiveWindow();
+
+            if (root != null) {
+
+                if (clickVoiceCallButton(root)) {
+
+                    callClicked = true;
+                    searching = false;
+
+                    getSharedPreferences(
+                            "call_control",
+                            MODE_PRIVATE)
+                            .edit()
+                            .putBoolean(
+                                    "call_requested",
+                                    false)
+                            .apply();
+
+                    return;
+                }
+            }
+
+            findVoiceCallButton();
+
+        }, 400);
+    }
+
+    private boolean clickVoiceCallButton(
+            AccessibilityNodeInfo node) {
+
+        if (node == null) return false;
+
+        CharSequence description =
+                node.getContentDescription();
+
+        if (description != null &&
+                description.toString()
+                        .trim()
+                        .equalsIgnoreCase("Voice call")) {
+
+            if (node.performAction(
+                    AccessibilityNodeInfo.ACTION_CLICK)) {
+
+                return true;
+            }
+
+            AccessibilityNodeInfo parent =
+                    node.getParent();
+
+            while (parent != null) {
+
+                if (parent.isClickable()) {
+
+                    boolean clicked =
+                            parent.performAction(
+                                    AccessibilityNodeInfo.ACTION_CLICK);
+
+                    parent.recycle();
+
+                    if (clicked) return true;
+
+                    break;
+                }
+
+                AccessibilityNodeInfo next =
+                        parent.getParent();
+
+                parent.recycle();
+
+                parent = next;
+            }
+        }
+
+        for (int i = 0;
+                i < node.getChildCount();
+                i++) {
+
+            AccessibilityNodeInfo child =
+                    node.getChild(i);
+
+            if (child != null) {
+
+                if (clickVoiceCallButton(child)) {
+
+                    child.recycle();
+                    return true;
+                }
+
+                child.recycle();
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public void onInterrupt() {
+    }
+
+    @Override
+    protected void onServiceConnected() {
+
+        super.onServiceConnected();
+
+        searching = false;
+        callClicked = false;
+        attempts = 0;
     }
 }

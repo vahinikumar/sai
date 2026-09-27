@@ -1,9 +1,11 @@
-package com.example.onebuttonwhatsapp.direct;
+package com.example.onebuttonwhatsapp;
 
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.widget.Toast;
+import android.view.Gravity;
+import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -15,41 +17,68 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Toast.makeText(
-                this,
-                "APP STARTED",
-                Toast.LENGTH_LONG
-        ).show();
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setGravity(Gravity.CENTER);
+        root.setPadding(15, 15, 15, 15);
 
-        startWhatsAppCall();
+        Button callButton = new Button(this);
+
+        callButton.setBackgroundResource(
+                R.drawable.grandma_call);
+
+        callButton.setText("");
+        callButton.setGravity(Gravity.CENTER);
+        callButton.setPadding(0, 0, 0, 0);
+
+        LinearLayout.LayoutParams buttonParams =
+                new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT);
+
+        root.addView(
+                callButton,
+                buttonParams);
+
+        callButton.setOnClickListener(
+                v -> startWhatsAppCall());
+
+        setContentView(root);
     }
 
     private void startWhatsAppCall() {
 
-        getSharedPreferences("call_control", MODE_PRIVATE)
+        getSharedPreferences(
+                "call_control",
+                MODE_PRIVATE)
                 .edit()
-                .putBoolean("call_requested", true)
+                .putBoolean(
+                        "call_requested",
+                        true)
                 .apply();
 
         Uri uri = Uri.parse(
-                "whatsapp://send?phone=" + WHATSAPP_NUMBER);
+                "https://wa.me/" +
+                WHATSAPP_NUMBER);
 
-        Intent intent = new Intent(
-                Intent.ACTION_VIEW,
-                uri);
+        Intent intent =
+                new Intent(
+                        Intent.ACTION_VIEW,
+                        uri);
 
         intent.setPackage("com.whatsapp");
 
+        intent.addFlags(
+                Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
         try {
+
             startActivity(intent);
 
         } catch (Exception e) {
 
-            Toast.makeText(
-                    this,
-                    "WHATSAPP OPEN FAILED",
-                    Toast.LENGTH_LONG
-            ).show();
+            e.printStackTrace();
         }
     }
 }

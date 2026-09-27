@@ -34,10 +34,12 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
 
         if (!callRequested) return;
 
-        if (searching || callClicked) return;
+        if (searching) return;
 
-        searching = true;
+        callClicked = false;
         attempts = 0;
+        searching = true;
+        handler.removeCallbacksAndMessages(null);
 
         findVoiceCallButton();
     }
@@ -69,7 +71,10 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
 
             if (root != null) {
 
-                if (clickVoiceCallButton(root)) {
+                boolean clicked = clickVoiceCallButton(root);
+                root.recycle();
+
+                if (clicked) {
 
                     callClicked = true;
                     searching = false;

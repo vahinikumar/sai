@@ -68,13 +68,12 @@ public class MainActivity extends AppCompatActivity {
 
         intent.setPackage("com.whatsapp");
 
-        intent.addFlags(
-                Intent.FLAG_ACTIVITY_CLEAR_TOP |
-                Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
         try {
 
             startActivity(intent);
+
+            // Close our app after WhatsApp is launched.
+            finish();
 
         } catch (Exception e) {
 

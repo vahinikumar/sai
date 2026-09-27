@@ -1,4 +1,4 @@
-package com.example.onebuttonwhatsapp;
+package com.example.onebuttonwhatsapp.direct;
 
 import android.content.Intent;
 import android.net.Uri;

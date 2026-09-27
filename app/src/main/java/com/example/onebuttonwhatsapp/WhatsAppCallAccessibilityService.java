@@ -5,7 +5,8 @@ import android.os.Handler;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
-public class WhatsAppCallAccessibilityService extends AccessibilityService {
+public class WhatsAppCallAccessibilityService
+        extends AccessibilityService {
 
     private final Handler handler = new Handler();
 
@@ -16,55 +17,61 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
 
-        if (event == null) {
+        if (event == null) return;
+
+        CharSequence packageName =
+                event.getPackageName();
+
+        if (packageName == null) return;
+
+        if (!packageName.toString()
+                .equals("com.whatsapp")) {
             return;
         }
 
-        CharSequence packageName = event.getPackageName();
-
-        if (packageName == null) {
-            return;
-        }
-
-        // Only react to WhatsApp.
-        if (!packageName.toString().equals("com.whatsapp")) {
-            return;
-        }
-
-        // Check whether OUR app requested a call.
         boolean callRequested =
                 getSharedPreferences(
                         "call_control",
                         MODE_PRIVATE)
-                        .getBoolean("call_requested", false);
+                        .getBoolean(
+                                "call_requested",
+                                false);
 
-        // If user opened WhatsApp normally, do nothing.
-        if (!callRequested) {
-            return;
+        if (!callRequested) return;
+
+        /*
+         * Start a fresh search for every new call request.
+         */
+        if (!searching) {
+
+            searching = true;
+            callClicked = false;
+            attempts = 0;
+
+            findVoiceCallButton();
         }
-
-        if (searching || callClicked) {
-            return;
-        }
-
-        searching = true;
-        attempts = 0;
-
-        findVoiceCallButton();
     }
 
     private void findVoiceCallButton() {
 
-        if (callClicked || attempts >= 10) {
-            searching = false;
+        /*
+         * Give WhatsApp plenty of time to load.
+         */
+        if (callClicked || attempts >= 25) {
 
-            // Cancel the request if we could not find the button.
-            getSharedPreferences(
-                    "call_control",
-                    MODE_PRIVATE)
-                    .edit()
-                    .putBoolean("call_requested", false)
-                    .apply();
+            if (!callClicked) {
+
+                searching = false;
+
+                getSharedPreferences(
+                        "call_control",
+                        MODE_PRIVATE)
+                        .edit()
+                        .putBoolean(
+                                "call_requested",
+                                false)
+                        .apply();
+            }
 
             return;
         }
@@ -72,6 +79,10 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
         attempts++;
 
         handler.postDelayed(() -> {
+
+            if (callClicked) {
+                return;
+            }
 
             AccessibilityNodeInfo root =
                     getRootInActiveWindow();
@@ -83,73 +94,105 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
                     callClicked = true;
                     searching = false;
 
-                    // Important:
-                    // Don't allow another automatic call.
+                    /*
+                     * Only clear the request after
+                     * the Voice call button was clicked.
+                     */
                     getSharedPreferences(
                             "call_control",
                             MODE_PRIVATE)
                             .edit()
-                            .putBoolean("call_requested", false)
+                            .putBoolean(
+                                    "call_requested",
+                                    false)
                             .apply();
+
+                    root.recycle();
 
                     return;
                 }
+
+                root.recycle();
             }
 
+            /*
+             * WhatsApp may still be loading.
+             * Try again.
+             */
             findVoiceCallButton();
 
-        }, 400);
+        }, 500);
     }
 
     private boolean clickVoiceCallButton(
             AccessibilityNodeInfo node) {
 
-        if (node == null) {
-            return false;
-        }
+        if (node == null) return false;
 
         CharSequence description =
                 node.getContentDescription();
 
-        if (description != null &&
-                description.toString()
-                        .trim()
-                        .equalsIgnoreCase("Voice call")) {
+        if (description != null) {
 
-            if (node.performAction(
-                    AccessibilityNodeInfo.ACTION_CLICK)) {
+            String value =
+                    description.toString()
+                            .trim();
 
-                return true;
-            }
+            if (value.equalsIgnoreCase(
+                    "Voice call")) {
 
-            AccessibilityNodeInfo parent =
-                    node.getParent();
+                /*
+                 * First try clicking the button itself.
+                 */
+                if (node.performAction(
+                        AccessibilityNodeInfo.ACTION_CLICK)) {
 
-            while (parent != null) {
-
-                if (parent.isClickable()) {
-
-                    boolean clicked =
-                            parent.performAction(
-                                    AccessibilityNodeInfo.ACTION_CLICK);
-
-                    parent.recycle();
-
-                    if (clicked) {
-                        return true;
-                    }
-
-                    break;
+                    return true;
                 }
 
-                AccessibilityNodeInfo next =
-                        parent.getParent();
+                /*
+                 * If the ImageButton itself cannot be
+                 * clicked, try its clickable parent.
+                 */
+                AccessibilityNodeInfo parent =
+                        node.getParent();
 
-                parent.recycle();
-                parent = next;
+                while (parent != null) {
+
+                    if (parent.isClickable()) {
+
+                        boolean clicked =
+                                parent.performAction(
+                                        AccessibilityNodeInfo
+                                                .ACTION_CLICK);
+
+                        AccessibilityNodeInfo next =
+                                parent.getParent();
+
+                        parent.recycle();
+
+                        if (clicked) {
+                            return true;
+                        }
+
+                        parent = next;
+
+                    } else {
+
+                        AccessibilityNodeInfo next =
+                                parent.getParent();
+
+                        parent.recycle();
+
+                        parent = next;
+                    }
+                }
             }
         }
 
+        /*
+         * Search all child nodes.
+         */
         for (int i = 0;
                 i < node.getChildCount();
                 i++) {
@@ -160,7 +203,9 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
             if (child != null) {
 
                 if (clickVoiceCallButton(child)) {
+
                     child.recycle();
+
                     return true;
                 }
 
@@ -172,10 +217,6 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
     }
 
     @Override
-    public void onInterrupt() {
-    }
-
-    @Override
     protected void onServiceConnected() {
 
         super.onServiceConnected();
@@ -183,5 +224,21 @@ public class WhatsAppCallAccessibilityService extends AccessibilityService {
         searching = false;
         callClicked = false;
         attempts = 0;
+    }
+
+    @Override
+    public void onInterrupt() {
+
+    }
+
+    @Override
+    public void onDestroy() {
+
+        handler.removeCallbacksAndMessages(null);
+
+        searching = false;
+        callClicked = false;
+
+        super.onDestroy();
     }
 }
